@@ -109,6 +109,12 @@ button.loading::after {
   }
 }
 
+.source-message {
+  color: #1d4ed8;
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

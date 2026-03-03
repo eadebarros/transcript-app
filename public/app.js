@@ -5,6 +5,7 @@ const errorText = document.getElementById('error');
 const copyButton = document.getElementById('copy-text');
 const submitButton = form.querySelector('button[type="submit"]');
 const segmentInfo = document.getElementById('segment-info');
+const sourceMessage = document.getElementById('source-message');
 
 const setLoading = (loading) => {
   if (loading) {
@@ -32,11 +33,23 @@ const showSegmentInfo = (count) => {
   }
 };
 
+const showSourceMessage = (source) => {
+  if (!source?.label || source.label === 'vídeo') {
+    sourceMessage.hidden = true;
+    sourceMessage.textContent = '';
+    return;
+  }
+  sourceMessage.textContent = `Fonte detectada: ${source.label}`;
+  sourceMessage.hidden = false;
+};
+
 const resetState = () => {
   errorText.hidden = true;
   resultsSection.hidden = true;
   transcriptText.textContent = '';
   segmentInfo.hidden = true;
+  sourceMessage.hidden = true;
+  sourceMessage.textContent = '';
 };
 
 form.addEventListener('submit', async (event) => {
@@ -60,9 +73,10 @@ form.addEventListener('submit', async (event) => {
       throw new Error(payload.error || 'Erro desconhecido');
     }
 
-    const { text, segments } = await response.json();
+    const { text, segments, source } = await response.json();
     showTranscript(text);
     showSegmentInfo(segments);
+    showSourceMessage(source);
   } catch (error) {
     errorText.textContent = error.message;
     errorText.hidden = false;

@@ -17,12 +17,37 @@ const PORT = process.env.PORT || 3000;
 const tmpDir = path.join(os.tmpdir(), 'transcript-app');
 fs.mkdirSync(tmpDir, { recursive: true });
 
-const downloadAudio = (videoUrl) => {
+const SOURCE_LABELS = {
+  youtube: 'YouTube',
+  instagram: 'Instagram Reels',
+  generic: 'vídeo',
+};
+
+const detectSourceFromUrl = (videoUrl) => {
+  const normalizedUrl = new URL(videoUrl);
+  const hostname = normalizedUrl.hostname.replace(/^www\./i, '').toLowerCase();
+
+  if (hostname.includes('instagram.com')) {
+    return 'instagram';
+  }
+
+  if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+    return 'youtube';
+  }
+
+  return 'generic';
+};
+
+const downloadAudio = (videoUrl, source = 'generic') => {
   return new Promise((resolve, reject) => {
     const timestamp = Date.now();
     const basePath = path.join(tmpDir, `audio-${timestamp}`);
     const outputTemplate = `${basePath}.%(ext)s`;
     const finalPath = `${basePath}.mp3`;
+
+    console.log(
+      `[download] ${SOURCE_LABELS[source] || SOURCE_LABELS.generic} detectado. Baixando o áudio...`
+    );
 
     const ytdlp = spawn('yt-dlp', [
       '-x',
@@ -41,7 +66,7 @@ const downloadAudio = (videoUrl) => {
     ytdlp.on('error', reject);
     ytdlp.on('close', (code) => {
       if (code !== 0) {
-        return reject(new Error('Falha ao baixar o áudio do YouTube.'));
+        return reject(new Error('Falha ao baixar o áudio do vídeo.'));
       }
       resolve(finalPath);
     });
@@ -118,16 +143,31 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/api/transcribe', async (req, res) => {
   let audioPath;
   let segments = [];
+  let source = 'generic';
   try {
     const { url, lang } = req.body;
     if (!url) {
       return res.status(400).json({ error: 'Informe a URL do vídeo' });
     }
 
-    audioPath = await downloadAudio(url);
+    try {
+      source = detectSourceFromUrl(url);
+    } catch (innerError) {
+      console.error(innerError);
+      return res.status(400).json({ error: 'Informe uma URL válida (YouTube ou Instagram).' });
+    }
+
+    audioPath = await downloadAudio(url, source);
     segments = await splitAudio(audioPath);
     const textSegments = await transcribeSegments(segments, lang);
-    res.json({ text: textSegments.join('\n\n'), segments: textSegments.length });
+    res.json({
+      text: textSegments.join('\n\n'),
+      segments: textSegments.length,
+      source: {
+        id: source,
+        label: SOURCE_LABELS[source] || SOURCE_LABELS.generic,
+      },
+    });
   } catch (error) {
     console.error(error);
     const message =

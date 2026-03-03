@@ -10,10 +10,16 @@
     <main>
       <section class="card">
         <h1>Transcript App</h1>
-        <p>Cole a URL do vídeo do YouTube e gere a transcrição a partir do áudio via Whisper.</p>
+        <p>Cole a URL do vídeo do YouTube ou um Reel público do Instagram e gere a transcrição a partir do áudio via Whisper.</p>
         <form id="transcript-form">
-          <label for="video-url">Link do YouTube</label>
-          <input id="video-url" name="url" type="url" placeholder="https://youtu.be/..." required />
+          <label for="video-url">Link do vídeo</label>
+          <input
+            id="video-url"
+            name="url"
+            type="url"
+            placeholder="https://youtu.be/... ou https://www.instagram.com/reel/..."
+            required
+          />
           <label for="lang">Idioma (opcional)</label>
           <input id="lang" name="lang" type="text" placeholder="pt,en" />
           <button type="submit">Transcrever</button>
@@ -26,6 +32,7 @@
           <button id="copy-text" type="button">Copiar tudo</button>
         </div>
         <p id="segment-info" class="segment-info" hidden></p>
+        <p id="source-message" class="source-message" hidden></p>
         <p id="error" class="error" hidden></p>
         <div id="transcript-text" class="transcript"></div>
       </section>
