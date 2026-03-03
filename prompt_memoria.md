@@ -2,7 +2,7 @@
 
 ## Visão geral
 - Webapp minimalista que permite colar a URL de um vídeo e obter uma transcrição automática do áudio. Atualmente aceita YouTube (vídeos comuns) e Reels públicos do Instagram, e também consegue baixar o vídeo completo em MP4.
-- Backend em Node/Express usa `yt-dlp` + `ffmpeg` para baixar e fatiar o áudio em pedaços ≤25 MB, depois envia cada pedaço para `whisper-1` via OpenAI. Há um handler separado (`/api/download`) que usa `yt-dlp` para baixar o MP4 e expõe o arquivo via `/downloads/`.
+- Backend em Node/Express usa `yt-dlp` + `ffmpeg` para baixar e fatiar o áudio em pedaços ≤25 MB, depois envia cada pedaço para `whisper-1` via OpenAI. Há um handler separado (`/api/download`) que usa `yt-dlp` para baixar o MP4 e, depois, um endpoint `/api/download-file/:fileName` que envia o arquivo com `Content-Disposition: attachment`, permitindo que o navegador abra o diálogo “Salvar como...”.
 - Frontend leve (HTML/CSS/JS vanilla) com um único formulário, feedback de origem detectada, botão “Baixar Markdown”, barra de progresso e um card adicional para baixar o vídeo.
 
 ## Stack e dependências

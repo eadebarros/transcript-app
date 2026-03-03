@@ -173,7 +173,6 @@ const cleanupFiles = (files) => {
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/downloads', express.static(downloadsDir));
 
 app.post('/api/transcribe', async (req, res) => {
   let audioPath;
@@ -241,9 +240,11 @@ app.post('/api/download', async (req, res) => {
 
     const videoPath = await downloadVideoFile(url, source);
     const fileName = path.basename(videoPath);
+    const downloadUrl = `/api/download-file/${fileName}`;
     res.json({
       message: 'Download pronto. Clique no link abaixo para salvar o vídeo.',
-      file: `/downloads/${fileName}`,
+      file: downloadUrl,
+      fileName,
     });
   } catch (error) {
     console.error(error);
@@ -252,6 +253,22 @@ app.post('/api/download', async (req, res) => {
       : 'Não foi possível processar o download. Tente novamente mais tarde.';
     res.status(500).json({ error: message });
   }
+});
+
+app.get('/api/download-file/:fileName', (req, res) => {
+  const safeName = path.basename(req.params.fileName || '');
+  const filePath = path.join(downloadsDir, safeName);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('Arquivo não encontrado. Execute o download novamente.');
+  }
+
+  res.download(filePath, safeName, (err) => {
+    cleanupFiles([filePath]);
+    if (err && !res.headersSent) {
+      console.error('Erro no download do vídeo:', err);
+      res.status(500).send('Erro ao enviar o vídeo. Tente novamente.');
+    }
+  });
 });
 
 app.listen(PORT, () => {

@@ -95,6 +95,7 @@ const showDownloadStatus = (message, isError = false) => {
 const resetDownloadStatus = () => {
   downloadLink.hidden = true;
   downloadLink.href = '';
+  downloadLink.removeAttribute('download');
   downloadLink.textContent = 'Salvar vídeo';
   showDownloadStatus('');
 };
@@ -206,9 +207,12 @@ const handleVideoDownload = async () => {
       throw new Error(payload.error || 'Erro desconhecido');
     }
 
-    const { message, file } = await response.json();
+    const { message, file, fileName } = await response.json();
     showDownloadStatus(message);
     downloadLink.href = file;
+    if (fileName) {
+      downloadLink.setAttribute('download', fileName);
+    }
     downloadLink.hidden = false;
   } catch (error) {
     showDownloadStatus(error.message, true);
