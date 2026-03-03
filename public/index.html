@@ -29,7 +29,13 @@
       <section class="card" id="results" hidden>
         <div class="actions">
           <h2>Transcrição</h2>
-          <button id="copy-text" type="button">Copiar tudo</button>
+          <div class="actions-right">
+            <button id="copy-text" type="button">Copiar tudo</button>
+            <button id="download-markdown" type="button">Baixar Markdown</button>
+          </div>
+        </div>
+        <div id="progress-bar" class="progress-bar" hidden>
+          <div id="progress-filled" class="progress-filled" style="width: 0%"></div>
         </div>
         <p id="segment-info" class="segment-info" hidden></p>
         <p id="source-message" class="source-message" hidden></p>

@@ -6,22 +6,31 @@ const copyButton = document.getElementById('copy-text');
 const submitButton = form.querySelector('button[type="submit"]');
 const segmentInfo = document.getElementById('segment-info');
 const sourceMessage = document.getElementById('source-message');
+const progressBar = document.getElementById('progress-bar');
+const progressFilled = document.getElementById('progress-filled');
+const downloadButton = document.getElementById('download-markdown');
 
 const setLoading = (loading) => {
   if (loading) {
     submitButton.disabled = true;
     submitButton.textContent = 'Transcrevendo...';
     submitButton.classList.add('loading');
+    startProgress();
   } else {
     submitButton.disabled = false;
     submitButton.textContent = 'Transcrever';
     submitButton.classList.remove('loading');
+    completeProgress();
   }
 };
+
+let progressIntervalId;
+let currentProgress = 0;
 
 const showTranscript = (text) => {
   transcriptText.textContent = text;
   resultsSection.hidden = false;
+  downloadButton.disabled = false;
 };
 
 const showSegmentInfo = (count) => {
@@ -31,6 +40,30 @@ const showSegmentInfo = (count) => {
   } else {
     segmentInfo.hidden = true;
   }
+};
+
+const startProgress = () => {
+  clearInterval(progressIntervalId);
+  progressBar.hidden = false;
+  currentProgress = 5;
+  progressFilled.style.width = `${currentProgress}%`;
+  progressIntervalId = setInterval(() => {
+    if (currentProgress < 90) {
+      currentProgress += Math.random() * 5;
+      progressFilled.style.width = `${Math.min(currentProgress, 90)}%`;
+    }
+  }, 300);
+};
+
+const completeProgress = () => {
+  clearInterval(progressIntervalId);
+  currentProgress = 100;
+  progressFilled.style.width = '100%';
+  setTimeout(() => {
+    progressBar.hidden = true;
+    progressFilled.style.width = '0%';
+    currentProgress = 0;
+  }, 600);
 };
 
 const showSourceMessage = (source) => {
@@ -50,6 +83,10 @@ const resetState = () => {
   segmentInfo.hidden = true;
   sourceMessage.hidden = true;
   sourceMessage.textContent = '';
+  downloadButton.disabled = true;
+  progressBar.hidden = true;
+  progressFilled.style.width = '0%';
+  clearInterval(progressIntervalId);
 };
 
 form.addEventListener('submit', async (event) => {
@@ -97,3 +134,31 @@ copyButton.addEventListener('click', async () => {
     setTimeout(() => (copyButton.textContent = 'Copiar tudo'), 1500);
   }
 });
+
+const slugifyTitle = (input) => {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 45) || 'transcricao';
+};
+
+const downloadMarkdown = () => {
+  const text = transcriptText.textContent;
+  if (!text) return;
+  const markdown = `# Transcrição\n\n${text}`;
+  const blob = new Blob([markdown], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `${slugifyTitle(text.substring(0, 40))}.md`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+};
+
+downloadButton.addEventListener('click', downloadMarkdown);
+
+downloadButton.disabled = true;
+resetState();

@@ -34,6 +34,8 @@ Abra o navegador em `http://localhost:3000`, cole o link do YouTube (não precis
 ## Observações
 
 - Reels públicos do Instagram e vídeos do YouTube são suportados a partir do mesmo campo de URL; o backend detecta a origem automaticamente e usa `yt-dlp` para baixar o áudio.
+- Reels públicos do Instagram e vídeos do YouTube são suportados a partir do mesmo campo de URL; o backend detecta a origem automaticamente e usa `yt-dlp` para baixar o áudio.
+- Uma barra de progresso aparece enquanto o download e a transcrição estão em andamento, dando um feedback visual de quanto já foi processado.
+- Ao final, você pode copiar o texto ou baixar a transcrição completa em Markdown com um clique.
 - Vídeos longos geram vários segmentos, mas você recebe tudo concatenado com quebras de linha entre cada pedaço.
 - Pode demorar um pouco mais que o normal porque o download e as várias chamadas à API são feitas em sequência.
-- Se quiser, posso adicionar uma barra de progresso ou histórico para mostrar quantos segmentos já foram processados.

@@ -22,7 +22,7 @@
 
 ## Pontos importantes
 - O app exige variável de ambiente `OPENAI_API_KEY`; sem ela a transcrição não roda (console warns e erro amigável é retornado).
-- Frontend também permite copiar tudo para a área de transferência e mostra status “Transcrevendo…” durante a requisição, além de um aviso sobre a fonte detectada.
+- Frontend também permite copiar tudo para a área de transferência, baixar a transcrição em Markdown e mostra uma barra de progresso + aviso sobre a fonte detectada durante a requisição.
 - `public` serve apenas HTML/CSS/JS, sem bundlers.
 - Não há nenhum banco, armazenamento ou login — o estado é efêmero.
 
