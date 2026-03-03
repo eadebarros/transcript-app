@@ -15,7 +15,9 @@ const openai = new OpenAI({ apiKey: openaiKey });
 const app = express();
 const PORT = process.env.PORT || 3000;
 const tmpDir = path.join(os.tmpdir(), 'transcript-app');
+const downloadsDir = path.join(tmpDir, 'downloads');
 fs.mkdirSync(tmpDir, { recursive: true });
+fs.mkdirSync(downloadsDir, { recursive: true });
 
 const SOURCE_LABELS = {
   youtube: 'YouTube',
@@ -67,6 +69,38 @@ const downloadAudio = (videoUrl, source = 'generic') => {
     ytdlp.on('close', (code) => {
       if (code !== 0) {
         return reject(new Error('Falha ao baixar o áudio do vídeo.'));
+      }
+      resolve(finalPath);
+    });
+  });
+};
+
+const downloadVideoFile = (videoUrl, source = 'generic') => {
+  return new Promise((resolve, reject) => {
+    const timestamp = Date.now();
+    const basePath = path.join(downloadsDir, `video-${timestamp}`);
+    const outputTemplate = `${basePath}.%(ext)s`;
+    const finalPath = `${basePath}.mp4`;
+
+    console.log(`[download] ${SOURCE_LABELS[source] || SOURCE_LABELS.generic} detectado. Baixando o vídeo...`);
+
+    const ytdlp = spawn('yt-dlp', [
+      '-f',
+      'bestvideo+bestaudio/best',
+      '--merge-output-format',
+      'mp4',
+      '-o',
+      outputTemplate,
+      videoUrl,
+    ]);
+
+    ytdlp.stderr.on('data', (chunk) => console.debug('[yt-dlp]', chunk.toString()));
+    ytdlp.stdout.on('data', (chunk) => console.debug('[yt-dlp]', chunk.toString()));
+
+    ytdlp.on('error', reject);
+    ytdlp.on('close', (code) => {
+      if (code !== 0) {
+        return reject(new Error('Falha ao baixar o vídeo.'));
       }
       resolve(finalPath);
     });
@@ -139,6 +173,7 @@ const cleanupFiles = (files) => {
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/downloads', express.static(downloadsDir));
 
 app.post('/api/transcribe', async (req, res) => {
   let audioPath;
@@ -186,6 +221,36 @@ app.post('/api/transcribe', async (req, res) => {
     if (segments.length) {
       cleanupFiles(segments);
     }
+  }
+});
+
+app.post('/api/download', async (req, res) => {
+  let source = 'generic';
+  try {
+    const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({ error: 'Informe a URL do vídeo para download.' });
+    }
+
+    try {
+      source = detectSourceFromUrl(url);
+    } catch (innerError) {
+      console.error(innerError);
+      return res.status(400).json({ error: 'Informe uma URL válida do YouTube.' });
+    }
+
+    const videoPath = await downloadVideoFile(url, source);
+    const fileName = path.basename(videoPath);
+    res.json({
+      message: 'Download pronto. Clique no link abaixo para salvar o vídeo.',
+      file: `/downloads/${fileName}`,
+    });
+  } catch (error) {
+    console.error(error);
+    const message = error?.message?.includes('Falha ao baixar o vídeo')
+      ? 'Não foi possível baixar o vídeo. Verifique a URL e tente novamente.'
+      : 'Não foi possível processar o download. Tente novamente mais tarde.';
+    res.status(500).json({ error: message });
   }
 });
 

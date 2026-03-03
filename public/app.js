@@ -9,6 +9,9 @@ const sourceMessage = document.getElementById('source-message');
 const progressBar = document.getElementById('progress-bar');
 const progressFilled = document.getElementById('progress-filled');
 const downloadButton = document.getElementById('download-markdown');
+const downloadVideoButton = document.getElementById('download-video-button');
+const downloadStatus = document.getElementById('download-status');
+const downloadLink = document.getElementById('download-link');
 
 const setLoading = (loading) => {
   if (loading) {
@@ -76,6 +79,26 @@ const showSourceMessage = (source) => {
   sourceMessage.hidden = false;
 };
 
+const showDownloadStatus = (message, isError = false) => {
+  if (!message) {
+    downloadStatus.hidden = true;
+    downloadStatus.textContent = '';
+    downloadStatus.classList.remove('error');
+    return;
+  }
+
+  downloadStatus.textContent = message;
+  downloadStatus.hidden = false;
+  downloadStatus.classList.toggle('error', isError);
+};
+
+const resetDownloadStatus = () => {
+  downloadLink.hidden = true;
+  downloadLink.href = '';
+  downloadLink.textContent = 'Salvar vídeo';
+  showDownloadStatus('');
+};
+
 const resetState = () => {
   errorText.hidden = true;
   resultsSection.hidden = true;
@@ -87,6 +110,7 @@ const resetState = () => {
   progressBar.hidden = true;
   progressFilled.style.width = '0%';
   clearInterval(progressIntervalId);
+  resetDownloadStatus();
 };
 
 form.addEventListener('submit', async (event) => {
@@ -158,7 +182,43 @@ const downloadMarkdown = () => {
   URL.revokeObjectURL(url);
 };
 
+const handleVideoDownload = async () => {
+  const urlInput = document.getElementById('video-url');
+  const url = urlInput?.value?.trim();
+  if (!url) {
+    showDownloadStatus('Informe uma URL válida.', true);
+    return;
+  }
+
+  downloadVideoButton.disabled = true;
+  showDownloadStatus('Preparando o download...');
+  downloadLink.hidden = true;
+
+  try {
+    const response = await fetch('/api/download', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json();
+      throw new Error(payload.error || 'Erro desconhecido');
+    }
+
+    const { message, file } = await response.json();
+    showDownloadStatus(message);
+    downloadLink.href = file;
+    downloadLink.hidden = false;
+  } catch (error) {
+    showDownloadStatus(error.message, true);
+  } finally {
+    downloadVideoButton.disabled = false;
+  }
+};
+
 downloadButton.addEventListener('click', downloadMarkdown);
+downloadVideoButton.addEventListener('click', handleVideoDownload);
 
 downloadButton.disabled = true;
 resetState();

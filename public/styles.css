@@ -113,6 +113,32 @@ button.loading::after {
   transition: width 0.25s ease;
 }
 
+.download-actions {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.download-status {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.download-status.error {
+  color: #dc2626;
+}
+
+.download-link {
+  display: inline-block;
+  margin-top: 4px;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
 .error {
   color: #dc2626;
   margin-top: 8px;
